@@ -1,0 +1,56 @@
+syntax = "proto3";
+
+package pb_user_service;
+option go_package = "internal/pb_user_service";
+
+service User {
+    rpc Login(LoginReq) returns (LoginRes);
+    rpc Save(SaveReq) returns (SaveRes);
+    rpc FindByEmail(FindByEmailReq) returns (FindByEmailRes);
+}
+
+message LoginReq {
+    string email = 1;
+    string password = 2;
+}
+
+message LoginRes {
+    int32 code = 1;
+    string message = 2;
+    string access_token = 3;
+}
+
+message SaveReq {
+    string email = 1;
+    string password = 2;
+    string name = 3;
+    string phone = 4;
+    string birth = 5;
+    string address = 6;
+    string gender = 7;
+}
+
+message UserData {
+    string email = 1;
+    string name = 3;
+    string phone = 4;
+    string birth = 5;
+    string address = 6;
+    string gender = 7;
+}
+
+message SaveRes {
+    int32 code = 1;
+    string message = 2;
+    UserData data = 3;
+}
+
+message FindByEmailReq {
+    string email = 1;
+}
+
+message FindByEmailRes {
+    int32 code = 1;
+    string message = 2;
+    UserData data = 3;
+}
