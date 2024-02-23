@@ -1,3 +1,5 @@
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
 CREATE TABLE IF NOT EXISTS user_details(
     user_id UUID NOT NULL REFERENCES users(id),
     name VARCHAR(100) NOT NULL,
