@@ -6,7 +6,9 @@ import (
 	"net"
 	"os"
 
+	"github.com/osvaldosilitonga/hotel-and-resto/user-service/db"
 	pb "github.com/osvaldosilitonga/hotel-and-resto/user-service/internal/pb_user_service"
+	"github.com/osvaldosilitonga/hotel-and-resto/user-service/repositories"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/services"
 
 	"github.com/joho/godotenv"
@@ -26,7 +28,10 @@ func main() {
 		log.Fatalf("Server can't listen. \n[ERR]: %v", err)
 	}
 
-	userService := services.NewUserService()
+	db := db.InitDB()
+
+	userRepo := repositories.NewUserRepo(db)
+	userService := services.NewUserService(userRepo)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserServer(grpcServer, userService)

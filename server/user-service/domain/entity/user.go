@@ -13,7 +13,12 @@ type UserDetails struct {
 
 type Users struct {
 	ID       string
-	Role     int
+	RoleID   int
 	Email    string
 	Password string
+}
+
+type UserProfile struct {
+	User        Users
+	UserDetails UserDetails
 }
