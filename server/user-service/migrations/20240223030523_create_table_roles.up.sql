@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS roles(
 );
 
 -- Seed
-INSERT INTO roles (name)
+INSERT INTO roles(name)
 VALUES
-    ('admin'),
-    ('user');
+    ('user'),
+    ('admin');
