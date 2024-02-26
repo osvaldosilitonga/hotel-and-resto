@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"log"
 
+	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/dto"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/entity"
 )
 
@@ -20,6 +21,46 @@ func NewUserRepo(db *sql.DB) UserRepo {
 	return &userRepoImpl{
 		DB: db,
 	}
+}
+
+func (r *userRepoImpl) Save(ctx context.Context, user dto.SaveUserReq) error {
+	// start transaction
+	tx, err := r.DB.Begin()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+	defer tx.Commit()
+
+	// insert to table users
+	query := `
+	INSERT INTO USERS(email, password, role_id)
+	VALUES ($1, $2, $3);
+	`
+	res, err := tx.ExecContext(ctx, query, user.Email, user.Password, user.RoleID)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	lastID, err := res.LastInsertId()
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	// insert to table user_details
+	query = `
+	INSERT INTO USER_DETAILS (user_id, name, phone, birth, address, gender)
+	VALUES ($1, $2, $3, $4, $5, $6);
+	`
+	_, err = tx.ExecContext(ctx, query, lastID, user.Name, user.Phone, user.Birth, user.Address, user.Gender)
+	if err != nil {
+		tx.Rollback()
+		return err
+	}
+
+	return nil
 }
 
 func (r *userRepoImpl) FindUserProfileByEmail(ctx context.Context, email string) (entity.UserProfile, error) {
