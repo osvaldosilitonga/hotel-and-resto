@@ -29,11 +29,25 @@ func NewUserService(ur repositories.UserRepo) *UserService {
 func (u *UserService) Login(ctx context.Context, payload *pb.LoginReq) (*pb.LoginRes, error) {
 	isValid, msg := utils.LoginValidator(payload.Email, payload.Password)
 	if !isValid {
-		return nil, status.Errorf(codes.Internal, msg)
+		return nil, status.Errorf(codes.InvalidArgument, msg)
 	}
 
+	user, err := u.UserRepo.FindUserProfileByEmail(ctx, payload.Email)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, status.Errorf(codes.NotFound, "email not found")
+		}
+		return nil, status.Errorf(codes.Internal, "internal server error")
+	}
+
+	if err := bcrypt.CompareHashAndPassword([]byte(user.User.Password), []byte(payload.Password)); err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "wrong password")
+	}
+
+	// TODO: Generate JWT Token
+
 	return &pb.LoginRes{
-		Code:        200,
+		Code:        0,
 		Message:     "ok",
 		AccessToken: "access_token_test",
 	}, nil
