@@ -3,6 +3,7 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"log"
 
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/entity"
 )
@@ -25,7 +26,7 @@ func (r *userRepoImpl) FindUserProfileByEmail(ctx context.Context, email string)
 	userProfile := entity.UserProfile{}
 
 	query := `
-	SELECT U.ID, U.ROLE, U.EMAIL, UD.NAME, UD.PHONE, UD.BIRTH, UD.ADDRESS, UD.GENDER
+	SELECT U.ID, U.ROLE_ID, U.EMAIL, UD.NAME, UD.PHONE, UD.BIRTH, UD.ADDRESS, UD.GENDER
 	FROM USERS AS U
 	JOIN USER_DETAILS AS UD ON U.ID = UD.USER_ID
 	WHERE U.EMAIL = $1
@@ -42,6 +43,7 @@ func (r *userRepoImpl) FindUserProfileByEmail(ctx context.Context, email string)
 		&userProfile.UserDetails.Address,
 		&userProfile.UserDetails.Gender,
 	); err != nil {
+		log.Printf("error from QueryRowContext, \n[ERR] => %v", err)
 		return userProfile, err
 	}
 
