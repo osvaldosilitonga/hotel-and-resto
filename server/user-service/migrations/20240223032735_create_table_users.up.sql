@@ -3,7 +3,7 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 CREATE TABLE IF NOT EXISTS users(
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     email VARCHAR(100) UNIQUE NOT NULL,
-    password VARCHAR(20) NOT NULL,
+    password VARCHAR NOT NULL,
     role_id INT NOT NULL DEFAULT 1 REFERENCES roles(id) 
 );
 
