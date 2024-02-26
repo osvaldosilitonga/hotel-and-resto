@@ -59,7 +59,7 @@ func TestLoginValidator(t *testing.T) {
 		d := v["data"].(data)
 		isValid, _ := utils.LoginValidator(d.Email, d.Password)
 
-		assert.Equal(t, isValid, v["expected"].(bool), "isValid must be False")
+		assert.Equal(t, v["expected"].(bool), isValid, "isValid must be False")
 	}
 }
 
@@ -185,7 +185,7 @@ func TestSaveValidator(t *testing.T) {
 		d := v["data"].(dto.SaveUserReq)
 		isValid, msg := utils.SaveValidator(d)
 
-		assert.Equal(t, isValid, v["expected"].(bool), fmt.Sprintf("actual: %v, expected: %v, msg: %v", isValid, v["expected"].(bool), msg))
+		assert.Equal(t, v["expected"].(bool), isValid, fmt.Sprintf("actual: %v, expected: %v, msg: %v", isValid, v["expected"].(bool), msg))
 		assert.Contains(t, msg, v["expected_msg"].(string), fmt.Sprintf("actual: %v, expected: message must contains = %v", msg, v["expected_msg"].(string)))
 	}
 
