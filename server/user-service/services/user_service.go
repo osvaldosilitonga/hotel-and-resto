@@ -5,9 +5,11 @@ import (
 	"database/sql"
 	"errors"
 
+	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/dto"
 	pb "github.com/osvaldosilitonga/hotel-and-resto/user-service/internal/pb_user_service"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/repositories"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/utils"
+	"golang.org/x/crypto/bcrypt"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -38,18 +40,49 @@ func (u *UserService) Login(ctx context.Context, payload *pb.LoginReq) (*pb.Logi
 }
 
 func (u *UserService) Save(ctx context.Context, payload *pb.SaveReq) (*pb.SaveRes, error) {
-	return &pb.SaveRes{
-		Code:    200,
-		Message: "ok",
-		Data: &pb.UserData{
-			Email:   "test@mail.com",
-			Name:    "test name",
-			Phone:   "1234567",
-			Birth:   "22/02/2024",
-			Address: "test address",
-			Gender:  "male",
-		},
-	}, nil
+	res := &pb.SaveRes{}
+
+	user := dto.SaveUserReq{
+		Email:    payload.Email,
+		Password: payload.Password,
+		Name:     payload.Name,
+		Phone:    payload.Phone,
+		Birth:    payload.Birth,
+		Address:  payload.Birth,
+		Gender:   payload.Gender,
+		RoleID:   1,
+	}
+
+	isValid, msg := utils.SaveValidator(user)
+	if !isValid {
+		return res, status.Errorf(codes.InvalidArgument, msg)
+	}
+
+	// hash password
+	hash, err := bcrypt.GenerateFromPassword([]byte(user.Password), 12)
+	if err != nil {
+		return nil, status.Error(codes.Internal, "failed when hashing password")
+	}
+
+	user.Password = string(hash)
+
+	err = u.UserRepo.Save(ctx, user)
+	if err != nil {
+		return res, err
+	}
+
+	res.Code = 200
+	res.Message = "ok"
+	res.Data = &pb.UserData{
+		Email:   user.Email,
+		Name:    user.Name,
+		Phone:   user.Phone,
+		Birth:   user.Birth,
+		Address: user.Address,
+		Gender:  user.Gender,
+	}
+
+	return res, nil
 }
 
 func (u *UserService) FindByEmail(ctx context.Context, payload *pb.FindByEmailReq) (*pb.FindByEmailRes, error) {

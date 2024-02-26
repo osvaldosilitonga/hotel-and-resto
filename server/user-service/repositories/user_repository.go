@@ -11,6 +11,7 @@ import (
 
 type UserRepo interface {
 	FindUserProfileByEmail(ctx context.Context, email string) (entity.UserProfile, error)
+	Save(ctx context.Context, user dto.SaveUserReq) error
 }
 
 type userRepoImpl struct {
@@ -35,15 +36,13 @@ func (r *userRepoImpl) Save(ctx context.Context, user dto.SaveUserReq) error {
 	// insert to table users
 	query := `
 	INSERT INTO USERS(email, password, role_id)
-	VALUES ($1, $2, $3);
+	VALUES ($1, $2, $3)
+	RETURNING ID;
 	`
-	res, err := tx.ExecContext(ctx, query, user.Email, user.Password, user.RoleID)
-	if err != nil {
-		tx.Rollback()
-		return err
-	}
 
-	lastID, err := res.LastInsertId()
+	var lastInsertedID string
+
+	err = tx.QueryRowContext(ctx, query, user.Email, user.Password, user.RoleID).Scan(&lastInsertedID)
 	if err != nil {
 		tx.Rollback()
 		return err
@@ -54,7 +53,7 @@ func (r *userRepoImpl) Save(ctx context.Context, user dto.SaveUserReq) error {
 	INSERT INTO USER_DETAILS (user_id, name, phone, birth, address, gender)
 	VALUES ($1, $2, $3, $4, $5, $6);
 	`
-	_, err = tx.ExecContext(ctx, query, lastID, user.Name, user.Phone, user.Birth, user.Address, user.Gender)
+	_, err = tx.ExecContext(ctx, query, lastInsertedID, user.Name, user.Phone, user.Birth, user.Address, user.Gender)
 	if err != nil {
 		tx.Rollback()
 		return err
