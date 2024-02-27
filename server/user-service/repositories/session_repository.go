@@ -3,12 +3,14 @@ package repositories
 import (
 	"context"
 	"database/sql"
+	"errors"
 
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/entity"
 )
 
 type SessionRepo interface {
 	Save(ctx context.Context, session *entity.Sessions) error
+	Delete(ctx context.Context, sessionID string) error
 }
 
 type sessionRepoImpl struct {
@@ -30,6 +32,22 @@ func (s *sessionRepoImpl) Save(ctx context.Context, session *entity.Sessions) er
 	_, err := s.DB.ExecContext(ctx, query, session.RefreshToken, session.AccessToken, session.Email, session.RoleID, session.Exp, session.CreatedAt, session.UpdatedAt)
 	if err != nil {
 		return err
+	}
+
+	return nil
+}
+
+func (s *sessionRepoImpl) Delete(ctx context.Context, refreshToken string) error {
+	query := `DELETE FROM sessions WHERE refresh_token = $1;`
+
+	res, err := s.DB.ExecContext(ctx, query, refreshToken)
+	if err != nil {
+		return err
+	}
+
+	affected, _ := res.RowsAffected()
+	if affected == 0 {
+		return errors.New("no affected row")
 	}
 
 	return nil
