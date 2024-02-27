@@ -18,6 +18,7 @@ message LoginRes {
     int32 code = 1;
     string message = 2;
     string access_token = 3;
+    string refresh_token = 4;
 }
 
 message SaveReq {
