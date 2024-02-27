@@ -3,8 +3,10 @@ package services
 import (
 	"context"
 	"database/sql"
+	"encoding/json"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 	"time"
 
@@ -14,6 +16,7 @@ import (
 	pb "github.com/osvaldosilitonga/hotel-and-resto/user-service/internal/pb_user_service"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/repositories"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/utils"
+	"github.com/redis/go-redis/v9"
 	"golang.org/x/crypto/bcrypt"
 
 	"google.golang.org/grpc/codes"
@@ -24,12 +27,14 @@ type UserService struct {
 	pb.UnimplementedUserServer
 	UserRepo    repositories.UserRepo
 	SessionRepo repositories.SessionRepo
+	RedisDB     *redis.Client
 }
 
-func NewUserService(ur repositories.UserRepo, sr repositories.SessionRepo) *UserService {
+func NewUserService(ur repositories.UserRepo, sr repositories.SessionRepo, rd *redis.Client) *UserService {
 	return &UserService{
 		UserRepo:    ur,
 		SessionRepo: sr,
+		RedisDB:     rd,
 	}
 }
 
@@ -76,7 +81,20 @@ func (u *UserService) Login(ctx context.Context, payload *pb.LoginReq) (*pb.Logi
 		return nil, status.Errorf(codes.Internal, fmt.Sprintf("fail to save user session. [ERR]: %v", err))
 	}
 
-	// TODO: Store Token to Cache Redis
+	// Store Token to Cache Redis
+	go func() {
+		jsonStr, err := json.Marshal(sessionData)
+		if err != nil {
+			log.Fatal("fail to make json string\n[ERR]:", err)
+			return
+		}
+
+		err = u.RedisDB.Set(context.TODO(), tokenPair["access_token"].(string), jsonStr, time.Duration(5)*time.Minute).Err()
+		if err != nil {
+			log.Println("failed cache user session to Redis, \n[ERR]:", err)
+			return
+		}
+	}()
 
 	return &pb.LoginRes{
 		Code:         0,

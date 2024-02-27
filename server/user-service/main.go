@@ -28,12 +28,16 @@ func main() {
 		log.Fatalf("Server can't listen. \n[ERR]: %v", err)
 	}
 
-	db := db.InitDB()
+	// Database
+	pg := db.InitDB()
+	redis := db.InitRedis()
 
-	userRepo := repositories.NewUserRepo(db)
-	sessionRepo := repositories.NewSessionRepo(db)
+	// Repositories
+	userRepo := repositories.NewUserRepo(pg)
+	sessionRepo := repositories.NewSessionRepo(pg)
 
-	userService := services.NewUserService(userRepo, sessionRepo)
+	// Services
+	userService := services.NewUserService(userRepo, sessionRepo, redis)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserServer(grpcServer, userService)
