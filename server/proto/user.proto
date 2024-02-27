@@ -7,6 +7,7 @@ service User {
     rpc Login(LoginReq) returns (LoginRes);
     rpc Save(SaveReq) returns (SaveRes);
     rpc FindByEmail(FindByEmailReq) returns (FindByEmailRes);
+    rpc Logout(LogoutReq) returns (LogoutRes);
 }
 
 message LoginReq {
@@ -54,4 +55,13 @@ message FindByEmailRes {
     int32 code = 1;
     string message = 2;
     UserData data = 3;
+}
+
+message LogoutReq {
+    string refresh_token = 1;
+}
+
+message LogoutRes {
+    int32 code = 1;
+    string message = 2;
 }

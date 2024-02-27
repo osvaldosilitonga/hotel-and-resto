@@ -22,6 +22,7 @@ const (
 	User_Login_FullMethodName       = "/pb_user_service.User/Login"
 	User_Save_FullMethodName        = "/pb_user_service.User/Save"
 	User_FindByEmail_FullMethodName = "/pb_user_service.User/FindByEmail"
+	User_Logout_FullMethodName      = "/pb_user_service.User/Logout"
 )
 
 // UserClient is the client API for User service.
@@ -31,6 +32,7 @@ type UserClient interface {
 	Login(ctx context.Context, in *LoginReq, opts ...grpc.CallOption) (*LoginRes, error)
 	Save(ctx context.Context, in *SaveReq, opts ...grpc.CallOption) (*SaveRes, error)
 	FindByEmail(ctx context.Context, in *FindByEmailReq, opts ...grpc.CallOption) (*FindByEmailRes, error)
+	Logout(ctx context.Context, in *LogoutReq, opts ...grpc.CallOption) (*LogoutRes, error)
 }
 
 type userClient struct {
@@ -68,6 +70,15 @@ func (c *userClient) FindByEmail(ctx context.Context, in *FindByEmailReq, opts .
 	return out, nil
 }
 
+func (c *userClient) Logout(ctx context.Context, in *LogoutReq, opts ...grpc.CallOption) (*LogoutRes, error) {
+	out := new(LogoutRes)
+	err := c.cc.Invoke(ctx, User_Logout_FullMethodName, in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // UserServer is the server API for User service.
 // All implementations must embed UnimplementedUserServer
 // for forward compatibility
@@ -75,6 +86,7 @@ type UserServer interface {
 	Login(context.Context, *LoginReq) (*LoginRes, error)
 	Save(context.Context, *SaveReq) (*SaveRes, error)
 	FindByEmail(context.Context, *FindByEmailReq) (*FindByEmailRes, error)
+	Logout(context.Context, *LogoutReq) (*LogoutRes, error)
 	mustEmbedUnimplementedUserServer()
 }
 
@@ -90,6 +102,9 @@ func (UnimplementedUserServer) Save(context.Context, *SaveReq) (*SaveRes, error)
 }
 func (UnimplementedUserServer) FindByEmail(context.Context, *FindByEmailReq) (*FindByEmailRes, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method FindByEmail not implemented")
+}
+func (UnimplementedUserServer) Logout(context.Context, *LogoutReq) (*LogoutRes, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method Logout not implemented")
 }
 func (UnimplementedUserServer) mustEmbedUnimplementedUserServer() {}
 
@@ -158,6 +173,24 @@ func _User_FindByEmail_Handler(srv interface{}, ctx context.Context, dec func(in
 	return interceptor(ctx, in, info, handler)
 }
 
+func _User_Logout_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LogoutReq)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(UserServer).Logout(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: User_Logout_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(UserServer).Logout(ctx, req.(*LogoutReq))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // User_ServiceDesc is the grpc.ServiceDesc for User service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -176,6 +209,10 @@ var User_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "FindByEmail",
 			Handler:    _User_FindByEmail_Handler,
+		},
+		{
+			MethodName: "Logout",
+			Handler:    _User_Logout_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
