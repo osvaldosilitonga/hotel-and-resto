@@ -4,8 +4,12 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"fmt"
+	"strings"
+	"time"
 
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/dto"
+	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/entity"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/helpers"
 	pb "github.com/osvaldosilitonga/hotel-and-resto/user-service/internal/pb_user_service"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/repositories"
@@ -18,12 +22,14 @@ import (
 
 type UserService struct {
 	pb.UnimplementedUserServer
-	UserRepo repositories.UserRepo
+	UserRepo    repositories.UserRepo
+	SessionRepo repositories.SessionRepo
 }
 
-func NewUserService(ur repositories.UserRepo) *UserService {
+func NewUserService(ur repositories.UserRepo, sr repositories.SessionRepo) *UserService {
 	return &UserService{
-		UserRepo: ur,
+		UserRepo:    ur,
+		SessionRepo: sr,
 	}
 }
 
@@ -51,11 +57,32 @@ func (u *UserService) Login(ctx context.Context, payload *pb.LoginReq) (*pb.Logi
 		return nil, status.Errorf(codes.Internal, "fail to generate token")
 	}
 
+	// Store Token to Database Session Table
+	now := time.Now().Unix()
+	sessionData := entity.Sessions{
+		RefreshToken: tokenPair["refresh_token"].(string),
+		AccessToken:  tokenPair["access_token"].(string),
+		Email:        user.User.Email,
+		RoleID:       user.User.RoleID,
+		Exp:          tokenPair["access_token_exp"].(int64),
+		CreatedAt:    now,
+		UpdatedAt:    now,
+	}
+
+	if err := u.SessionRepo.Save(ctx, &sessionData); err != nil {
+		if strings.Contains(err.Error(), "violates unique constraint") {
+			return nil, status.Errorf(codes.AlreadyExists, "violates unique constraint")
+		}
+		return nil, status.Errorf(codes.Internal, fmt.Sprintf("fail to save user session. [ERR]: %v", err))
+	}
+
+	// TODO: Store Token to Cache Redis
+
 	return &pb.LoginRes{
 		Code:         0,
 		Message:      "ok",
-		AccessToken:  tokenPair["access_token"],
-		RefreshToken: tokenPair["refresh_token"],
+		AccessToken:  tokenPair["access_token"].(string),
+		RefreshToken: tokenPair["refresh_token"].(string),
 	}, nil
 }
 

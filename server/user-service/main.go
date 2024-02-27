@@ -31,7 +31,9 @@ func main() {
 	db := db.InitDB()
 
 	userRepo := repositories.NewUserRepo(db)
-	userService := services.NewUserService(userRepo)
+	sessionRepo := repositories.NewSessionRepo(db)
+
+	userService := services.NewUserService(userRepo, sessionRepo)
 
 	grpcServer := grpc.NewServer()
 	pb.RegisterUserServer(grpcServer, userService)

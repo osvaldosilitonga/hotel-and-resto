@@ -8,24 +8,25 @@ import (
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/entity"
 )
 
-func GenerateTokenPair(user *entity.UserProfile) (map[string]string, error) {
+func GenerateTokenPair(user *entity.UserProfile) (map[string]any, error) {
 	// Generate Access Token - 15 minute
-	exp := time.Now().Add(time.Minute * 15).Unix()
-	accessToken, err := GenerateToken(user.User.Email, user.User.RoleID, exp)
+	accessExp := time.Now().Add(time.Minute * 15).Unix()
+	accessToken, err := GenerateToken(user.User.Email, user.User.RoleID, accessExp)
 	if err != nil {
 		return nil, err
 	}
 
 	// Generate Resfresh Token - 24 hour
-	exp = time.Now().Add(time.Hour * 24).Unix()
-	refreshToken, err := GenerateToken("", 0, exp)
+	refreshExp := time.Now().Add(time.Hour * 24).Unix()
+	refreshToken, err := GenerateToken("", 0, refreshExp)
 	if err != nil {
 		return nil, err
 	}
 
-	res := map[string]string{
-		"access_token":  accessToken,
-		"refresh_token": refreshToken,
+	res := map[string]any{
+		"access_token":     accessToken,
+		"refresh_token":    refreshToken,
+		"access_token_exp": accessExp,
 	}
 
 	return res, nil
