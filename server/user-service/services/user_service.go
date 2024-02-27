@@ -175,3 +175,22 @@ func (u *UserService) FindByEmail(ctx context.Context, payload *pb.FindByEmailRe
 		},
 	}, nil
 }
+
+func (u *UserService) Logout(ctx context.Context, payload *pb.LogoutReq) (*pb.LogoutRes, error) {
+	if payload == nil || payload.RefreshToken == "" {
+		return nil, status.Error(codes.InvalidArgument, "invalid argument")
+	}
+
+	if err := u.SessionRepo.Delete(ctx, payload.RefreshToken); err != nil {
+		if strings.Contains(err.Error(), "no affected row") {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		return nil, status.Error(codes.Internal, "internal server error")
+	}
+
+	return &pb.LogoutRes{
+		Code:    0,
+		Message: "ok",
+	}, nil
+}
