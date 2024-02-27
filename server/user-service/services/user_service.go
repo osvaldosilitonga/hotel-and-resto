@@ -133,7 +133,10 @@ func (u *UserService) Save(ctx context.Context, payload *pb.SaveReq) (*pb.SaveRe
 
 	err = u.UserRepo.Save(ctx, user)
 	if err != nil {
-		return res, err
+		if strings.Contains(err.Error(), "violates unique constraint") {
+			return nil, status.Error(codes.AlreadyExists, "violates unique constraint")
+		}
+		return nil, status.Error(codes.Internal, "internal server error")
 	}
 
 	res.Code = 200
