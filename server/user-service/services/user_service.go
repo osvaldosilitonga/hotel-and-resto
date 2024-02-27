@@ -6,6 +6,7 @@ import (
 	"errors"
 
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/domain/dto"
+	"github.com/osvaldosilitonga/hotel-and-resto/user-service/helpers"
 	pb "github.com/osvaldosilitonga/hotel-and-resto/user-service/internal/pb_user_service"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/repositories"
 	"github.com/osvaldosilitonga/hotel-and-resto/user-service/utils"
@@ -44,12 +45,17 @@ func (u *UserService) Login(ctx context.Context, payload *pb.LoginReq) (*pb.Logi
 		return nil, status.Errorf(codes.InvalidArgument, "wrong password")
 	}
 
-	// TODO: Generate JWT Token
+	// Generate JWT Token
+	tokenPair, err := helpers.GenerateTokenPair(&user)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "fail to generate token")
+	}
 
 	return &pb.LoginRes{
-		Code:        0,
-		Message:     "ok",
-		AccessToken: "access_token_test",
+		Code:         0,
+		Message:      "ok",
+		AccessToken:  tokenPair["access_token"],
+		RefreshToken: tokenPair["refresh_token"],
 	}, nil
 }
 
